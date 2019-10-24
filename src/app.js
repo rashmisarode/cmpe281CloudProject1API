@@ -42,8 +42,8 @@ app.post('/upload_file', function (req, res) {
     if (!req.files || Object.keys(req.files).length === 0) {
         return res.status(400).send('No files were uploaded.');
     }
-    console.log(process.env.AWS_ACCESS_KEY, process.env.AWS_SECRET_ACCESS_KEY)
-
+    //console.log(process.env.AWS_ACCESS_KEY, process.env.AWS_SECRET_ACCESS_KEY)
+   
     console.log("tempFilePath:" + req.files.inputFile.tempFilePath)
     const fileContent = fs.createReadStream(req.files.inputFile.tempFilePath);
     console.log("mimetype: " + req.files.inputFile.mimetype)
@@ -70,14 +70,23 @@ app.post('/upload_file', function (req, res) {
     });
 
     function updateDataBase(){
-       
+      console.log(`userName: ${req.body.userName}`)
+      console.log(`FileName: ${req.files.inputFile.name}`)
+       var currentTime = Date.now();
+       //var epoch = Math.floor(currentTime/1000)
+       //var time = new Date();
+       var userName = req.body.userName
+       var fileName = req.files.inputFile.name;
+       var userId = userName.concat("_",fileName)
+       console.log(`userId: ${userId}`)
         const ddbparams = {
             TableName: 'UserData',
             Item: {
-              'userId' : {S: 'rashmi'},
-              'fileName' : {S: 'firstfile.png'},
-              'fileCreatedTime' : {N: '4896487656'},
-              'fileUpdatedTime' : {N: '498595659'}
+              'userId' : {S: userId},
+              'userName' : {S: userName},
+              'fileName' : {S: fileName},
+              'fileCreatedTime' : {S: currentTime},
+              'fileUpdatedTime' : {S: currentTime}
             }
           };
           
@@ -100,7 +109,7 @@ app.delete('/delete_file', function (req, res) {
     }
 
     const fileDeletePath = req.body.deleteFile
-
+    const userId = req.body.userId
     // Setting up S3 delete parameters
     const params = {
         Bucket: "cloudhwbucket1",
@@ -130,7 +139,7 @@ app.delete('/delete_file', function (req, res) {
         const ddbparams = {
             TableName: 'UserData',
             Key: {
-                "userId":{"S":"pranav"}
+                "userId":{"S":userId}
             
             }
           };
@@ -168,6 +177,29 @@ app.get('/getUserData', function (req, res) {
           //return res.status(200).json(data);
         }
       });
+});
+
+app.get('/getAdminData', function (req, res) {
+    
+  var params = {
+      TableName: 'UserData',
+     /*  Key: {
+        'userId': {N: '001'}
+      },
+      ProjectionExpression: 'ATTRIBUTE_NAME' */
+    };
+    
+    // Call DynamoDB to read the item from the table
+    ddb.scan(params, function(err, data) {
+      if (err) {
+        console.log("Error", err);
+        return res.status(500).send(`Can not get the data. ${err}`)
+      } else {
+        console.log("Success", data.Items);
+        return res.status(200).json(data.Items);
+        //return res.status(200).json(data);
+      }
+    });
 });
 
 
