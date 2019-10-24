@@ -69,38 +69,69 @@ app.post('/upload_file', function (req, res) {
         }
     });
 
-    function updateDataBase(){
+    function updateDataBase() {
       console.log(`userName: ${req.body.userName}`)
       console.log(`FileName: ${req.files.inputFile.name}`)
-       var currentTime = Date.now();
+       var currentTime = new Date().toString();
+       console.log(`currentTime: ${currentTime}`)
        //var epoch = Math.floor(currentTime/1000)
        //var time = new Date();
        var userName = req.body.userName
+       console.log(req.body);
+       var description = req.body.description
        var fileName = req.files.inputFile.name;
        var userId = userName.concat("_",fileName)
        console.log(`userId: ${userId}`)
-        const ddbparams = {
-            TableName: 'UserData',
-            Item: {
-              'userId' : {S: userId},
-              'userName' : {S: userName},
-              'fileName' : {S: fileName},
-              'fileCreatedTime' : {S: currentTime},
-              'fileUpdatedTime' : {S: currentTime}
-            }
-          };
-          
-          // Call DynamoDB to add the item to the table
-          ddb.putItem(ddbparams, function(err, data) {
-            if (err) {
-              console.log("Error", err);
-            } else {
-              console.log("Success", data);
-            }
-          });
+       console.log(`description: ${description}`)
+
+       ddb.scan({
+        TableName: 'UserData',
+       }, function(err, data) {
+        if (err) {
+          console.log("Error", err);
+
+        } else {
+          console.log("Success", data.Items);
+           const foundItems = data.Items.filter(item=> item.userId.S === userId);           
+           if (foundItems.length > 0) {
+            console.log("File is already exists, so updating it", foundItems);
+             const foundItem = foundItems[0];
+             console.log("Updating FIle item ", foundItem);
+            putItem(userId, userName, fileName, description, foundItem.fileCreatedTime.S);
+           } else {
+             console.log("It is new file, so creating new record ", userId);
+            putItem(userId, userName, fileName, description, currentTime);
+           }
+
+        }
+      });
+
     }
 
 });
+
+function putItem(userId, userName, fileName, description, fileCreationTime ) {
+  const ddbparams = {
+    TableName: 'UserData',
+    Item: {
+      'userId' : {S: userId},
+      'userName' : {S: userName},
+      'fileName' : {S: fileName},
+      'description' : {S: description},
+      'fileCreatedTime' : {S: fileCreationTime},
+      'fileUpdatedTime' : {S: new Date().toString()}
+    }
+  };
+  
+  // Call DynamoDB to add the item to the table
+  ddb.putItem(ddbparams, function(err, data) {
+    if (err) {
+      console.log("Error", err);
+    } else {
+      console.log("Success", data);
+    }
+  });
+}
 
 app.delete('/delete_file', function (req, res) {
     console.log("REQUEST param ", req.body);
