@@ -187,69 +187,48 @@ app.delete('/delete_file', function (req, res) {
   }
 });
 
-/* app.get('/getUserData', function (req, res) {
-    
-    var params = {
-      RequestItems: {
-        'UserData': {
-        Keys: [
-          {'userName': {S: 'rashmisarode92@gmail.com'}}
-        ],
-        ProjectionExpression: 'userName, ATTRIBUTE'
-      }
-    }
-  }
-
-      
-      // Call DynamoDB to read the item from the table
-      ddb.batchGetItem(params, function(err, data) {
-        if (err) {
-          console.log("Error", err);
-          return res.status(500).send(`Can not get the data. ${err}`)
-        } else {
-          console.log("Success", data);
-          return res.status(200).json(data.Items);
-          //return res.status(200).json(data);
-        }
-      });
-}); */
-
-//var docClient = new AWS.DynamoDB.DocumentClient();
-app.get('/getUserData', function (req, res) {
-
-  /*  var params = {
-     RequestItems: {
-       'UserData': {
-       Keys: [
-         {'userName': {S: 'rashmisarode92@gmail.com'}}
-       ],
-       ProjectionExpression: 'userName, ATTRIBUTE'
-     }
-   }
- } */
-
-  var params = {
-    TableName: 'UserData',
-     Key: {
-       'userName':{'S': 'rashmisarode92@gmail.com'}
-     },
-  };
-
-  // Call DynamoDB to read the item from the table
-  ddb.get(params, function (err, data) {
-    if (err) {
-      console.log("Error", err);
-      return res.status(500).send(`Can not get the data. ${err}`)
-    } else {
-      console.log("Success", data);
-      return res.status(200).json(data.Items);
-      //return res.status(200).json(data);
-    }
+app.get('/getUserData/:userName', function (req, res) {
+  AWS.config.update({
+    region: "us-west-1",
+    endpoint: "http://dynamodb.us-west-1.amazonaws.com"
   });
+  
+  var docClient = new AWS.DynamoDB.DocumentClient();
+  
+  var table = "UserData";
+  const userName = req.params.userName
+  console.log("userName:"+userName)
+  var params = {
+      TableName: table,
+      FilterExpression: '#userName = :userName',
+      ExpressionAttributeNames: {
+        '#userName' : 'userName'
+      },
+      ExpressionAttributeValues: {
+        ':userName' : userName
+      }
+
+  };
+  
+  docClient.scan(params, function(err, data) {
+      if (err) {
+          console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+          return res.status(500).send(`Can not get the data. ${err}`)
+      } else {
+          console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
+          return res.status(200).json(data.Items);
+      }
+  });
+  
 });
 
 app.get('/getAdminData', function (req, res) {
-
+  AWS.config.update({
+    region: "us-west-1",
+    endpoint: "http://dynamodb.us-west-1.amazonaws.com"
+  });
+  
+  var docClient = new AWS.DynamoDB.DocumentClient();
   var params = {
     TableName: 'UserData',
     /*  Key: {
@@ -259,7 +238,7 @@ app.get('/getAdminData', function (req, res) {
   };
 
   // Call DynamoDB to read the item from the table
-  ddb.scan(params, function (err, data) {
+  docClient.scan(params, function (err, data) {
     if (err) {
       console.log("Error", err);
       return res.status(500).send(`Can not get the data. ${err}`)
