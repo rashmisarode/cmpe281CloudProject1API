@@ -23,7 +23,11 @@ const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
 });
-const ddb = new AWS.DynamoDB({ apiVersion: '2012-08-10' });
+const ddb = new AWS.DynamoDB({ apiVersion: '2012-08-10' ,
+    region: "us-west-1",
+    endpoint: "http://dynamodb.us-west-1.amazonaws.com",
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY});
 
 app.use(express.json())
 app.use(cors())
@@ -190,7 +194,9 @@ app.delete('/delete_file', function (req, res) {
 app.get('/getUserData/:userName', function (req, res) {
   AWS.config.update({
     region: "us-west-1",
-    endpoint: "http://dynamodb.us-west-1.amazonaws.com"
+    endpoint: "http://dynamodb.us-west-1.amazonaws.com",
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
   });
   
   var docClient = new AWS.DynamoDB.DocumentClient();
@@ -225,7 +231,9 @@ app.get('/getUserData/:userName', function (req, res) {
 app.get('/getAdminData', function (req, res) {
   AWS.config.update({
     region: "us-west-1",
-    endpoint: "http://dynamodb.us-west-1.amazonaws.com"
+    endpoint: "http://dynamodb.us-west-1.amazonaws.com",
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
   });
   
   var docClient = new AWS.DynamoDB.DocumentClient();
